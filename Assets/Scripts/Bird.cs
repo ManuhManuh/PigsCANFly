@@ -10,7 +10,14 @@ public class Bird : MonoBehaviour, ILaunchable
 
     [SerializeField] private float damage;
     [SerializeField] private float mass;
+    [SerializeField] private float maxDistanceFromCamera;
 
+    private LaunchManager launchManager;
+
+    private void Start()
+    {
+        launchManager = FindObjectOfType<LaunchManager>();
+    }
     public void OnLocked(IFlyingTarget target)
     {
         throw new System.NotImplementedException();
@@ -34,7 +41,19 @@ public class Bird : MonoBehaviour, ILaunchable
 
     public void OnMissed()
     {
+        // tell GameManager that am dead
+        GameManager.instance.OnDied(gameObject);
+
         // die
-        // tell gameManager that am dead
+        Destroy(gameObject);
+    }
+
+    private void Update()
+    {
+        // self destruct if too far from camera
+        if(Vector3.Distance(gameObject.transform.position, Camera.main.transform.position) > maxDistanceFromCamera)
+        {
+            OnMissed();
+        }
     }
 }
