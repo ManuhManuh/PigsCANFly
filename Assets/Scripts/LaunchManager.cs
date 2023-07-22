@@ -2,11 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
+using TMPro;
 
 public class LaunchManager : MonoBehaviour
 {
     [SerializeField] ARRaycastManager raycastManager;
     [SerializeField] GameObject birdPrefab;
+    [SerializeField] float launchSpeed = 10.0f;
+    [SerializeField] TMP_Text message;
+
     public bool ObjectPlaced
     {
         get { return objectPlaced; }
@@ -16,14 +20,13 @@ public class LaunchManager : MonoBehaviour
     private bool objectPlaced;
     private List<ARRaycastHit> raycastHits = new List<ARRaycastHit>();
     private GameObject currentLaunchable;
+    private ParticleSystem trail;
 
     private void Start()
     {
         objectPlaced = false;
-        //if(currentLaunchable.GetComponent<ILaunchable>() == null)
-        //{
-        //    Debug.Log("bird Prefab needs to be type ILaunchable");
-        //}
+        trail = currentLaunchable.gameObject.GetComponent<ParticleSystem>();
+
     }
     private void Update()
     {
@@ -42,8 +45,9 @@ public class LaunchManager : MonoBehaviour
         }
         if (Input.touchCount > 1 && objectPlaced)
         {
-            // multi-touch - launch object if placed
-            Launch();
+            // multi-touch - launch object if placed (intended to vary with touch phase)
+            message.text = "Launching...";
+            Launch(launchSpeed);
         }
     }
 
@@ -54,20 +58,26 @@ public class LaunchManager : MonoBehaviour
         {
             currentLaunchable = Instantiate(birdPrefab, hit.pose.position, hit.pose.rotation);
             objectPlaced = true;
+            message.text = "Bird placed - ready to launch!";
         }
-        //else
-        //{
-        //    currentLaunchable.transform.position = hit.pose.position;
-        //    currentLaunchable.transform.rotation = hit.pose.rotation;
-        //}
 
     }
 
-    void Launch()
+    void Launch(float launchSpeed)
     {
         // turn gravity on
+        Rigidbody birdRB = currentLaunchable.GetComponent<Rigidbody>();
+        if (birdPrefab != null)
+        {
+            birdRB.useGravity = true;
+        }
 
-        // apply force to object
+        // start the particle system
+        trail.Play();
 
+        // apply force to object (intended to be toward locked object, i.e., pig)
+        birdRB.AddForce(Vector3.up * launchSpeed, ForceMode.Impulse);
+
+        message.text = "Bird has launched!";
     }
 }
